@@ -73,6 +73,47 @@ input, select, textarea { outline: none; font-family: inherit; font-size: 14px; 
 .form-group textarea { resize: vertical; min-height: 80px; }
 .error-msg { background: var(--danger-light); color: var(--danger); padding: 10px 12px; border-radius: var(--radius); margin-bottom: 12px; font-size: 13px; }
 
+/* ===== AUTH SWITCH LINK ===== */
+.auth-switch { margin-top: 18px; font-size: 13px; color: var(--text-muted); }
+.auth-switch a { color: var(--green-main); font-weight: 600; }
+.auth-switch a:hover { text-decoration: underline; }
+
+/* ===== REGISTRATION ===== */
+.reg-card { width: 420px; }
+
+.reg-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 2px solid var(--green-light);
+}
+.reg-tab {
+  flex: 1;
+  padding: 10px;
+  background: var(--white);
+  color: var(--green-main);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--transition);
+  border: none;
+}
+.reg-tab.active {
+  background: var(--green-main);
+  color: var(--white);
+}
+.reg-tab:not(.active):hover { background: var(--green-pale); }
+
+.hint { display: block; color: var(--text-muted); font-size: 11px; margin-top: 4px; }
+.req { color: var(--danger); }
+
+/* ===== REGISTRATION SUCCESS ===== */
+.reg-success { text-align: center; padding: 12px 0 8px; }
+.success-icon { font-size: 48px; margin-bottom: 12px; }
+.reg-success h3 { color: var(--green-main); font-size: 18px; margin-bottom: 8px; }
+.reg-success p { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+
 /* ===== BUTTONS ===== */
 .btn {
   display: inline-flex;

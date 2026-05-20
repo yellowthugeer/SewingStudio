@@ -24,6 +24,79 @@
         <div id="login-error" class="error-msg hidden"></div>
         <button type="submit" class="btn btn-primary btn-full">Войти</button>
       </form>
+      <p class="auth-switch">Нет аккаунта? <a href="#" id="go-to-register">Зарегистрироваться</a></p>
+    </div>
+  </div>
+
+  <!-- REGISTRATION SCREEN -->
+  <div id="register-screen" class="login-screen hidden">
+    <div class="login-card reg-card">
+      <div class="login-logo">✂️</div>
+      <h1>Регистрация</h1>
+      <p class="login-subtitle">Ателье «Стиль»</p>
+
+      <div class="reg-tabs">
+        <button class="reg-tab active" data-tab="client">👥 Клиент</button>
+        <button class="reg-tab" data-tab="employee">🔧 Сотрудник</button>
+      </div>
+
+      <!-- CLIENT FORM -->
+      <form id="reg-client-form" class="reg-form">
+        <div class="form-group">
+          <label>Имя <span class="req">*</span></label>
+          <input type="text" id="rc-firstName" placeholder="Введите имя" required />
+        </div>
+        <div class="form-group">
+          <label>Фамилия <span class="req">*</span></label>
+          <input type="text" id="rc-lastName" placeholder="Введите фамилию" required />
+        </div>
+        <div class="form-group">
+          <label>Телефон <span class="req">*</span></label>
+          <input type="tel" id="rc-phone" placeholder="+7 (999) 000-00-00" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="rc-email" placeholder="example@mail.ru" />
+        </div>
+        <div id="reg-client-error" class="error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full">Зарегистрироваться</button>
+      </form>
+
+      <!-- EMPLOYEE FORM -->
+      <form id="reg-employee-form" class="reg-form hidden">
+        <div class="form-group">
+          <label>Логин <span class="req">*</span></label>
+          <input type="text" id="re-login" placeholder="Придумайте логин" required />
+        </div>
+        <div class="form-group">
+          <label>Пароль <span class="req">*</span></label>
+          <input type="password" id="re-password" placeholder="Придумайте пароль" required />
+        </div>
+        <div class="form-group">
+          <label>Телефон <span class="req">*</span></label>
+          <input type="tel" id="re-phone" placeholder="+7 (999) 000-00-00" required />
+        </div>
+        <div class="form-group">
+          <label>Должность <span class="req">*</span></label>
+          <select id="re-role"></select>
+        </div>
+        <div class="form-group">
+          <label>Код регистрации <span class="req">*</span></label>
+          <input type="password" id="re-code" placeholder="Введите секретный код" required />
+          <small class="hint">Код выдаётся администратором</small>
+        </div>
+        <div id="reg-employee-error" class="error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full">Зарегистрироваться</button>
+      </form>
+
+      <!-- SUCCESS MESSAGE -->
+      <div id="reg-success" class="reg-success hidden">
+        <div class="success-icon">✅</div>
+        <h3 id="reg-success-title">Регистрация прошла успешно!</h3>
+        <p id="reg-success-text"></p>
+      </div>
+
+      <p class="auth-switch"><a href="#" id="go-to-login">← Уже есть аккаунт? Войти</a></p>
     </div>
   </div>
 

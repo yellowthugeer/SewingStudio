@@ -77,6 +77,134 @@ $('login-form').addEventListener('submit', async e => {
   }
 });
 
+// ── Login ↔ Register navigation ──────────────────────────────
+$('go-to-register').addEventListener('click', async e => {
+  e.preventDefault();
+  hide('login-screen');
+  // Загружаем роли сотрудников (исключаем «Клиент»)
+  try {
+    const roles = await api.getRoles();
+    const staffRoles = roles.filter(r => r.roleName !== 'Клиент');
+    $('re-role').innerHTML = staffRoles
+      .map(r => `<option value="${r.id}">${r.roleName}</option>`)
+      .join('');
+  } catch (_) {}
+  resetRegisterScreen();
+  show('register-screen');
+});
+
+$('go-to-login').addEventListener('click', e => {
+  e.preventDefault();
+  hide('register-screen');
+  show('login-screen');
+});
+
+// ── Register — tab switching ──────────────────────────────────
+document.querySelectorAll('.reg-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.reg-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    if (tab === 'client') {
+      show('reg-client-form');
+      hide('reg-employee-form');
+    } else {
+      hide('reg-client-form');
+      show('reg-employee-form');
+    }
+    hide('reg-success');
+  });
+});
+
+function resetRegisterScreen() {
+  // показать формы, скрыть success
+  show('reg-client-form');
+  hide('reg-employee-form');
+  hide('reg-success');
+  // активировать первый таб
+  document.querySelectorAll('.reg-tab').forEach((b, i) => b.classList.toggle('active', i === 0));
+  // очистить поля
+  ['rc-firstName','rc-lastName','rc-phone','rc-email',
+   're-login','re-password','re-phone','re-code'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+  hide('reg-client-error');
+  hide('reg-employee-error');
+}
+
+// ── Register — клиент ─────────────────────────────────────────
+const STAFF_CODE = 'ATELIER123';   // код регистрации для сотрудников
+
+$('reg-client-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  hide('reg-client-error');
+
+  const dto = {
+    firstName: $('rc-firstName').value.trim(),
+    lastName:  $('rc-lastName').value.trim(),
+    phone:     $('rc-phone').value.trim(),
+    email:     $('rc-email').value.trim() || null
+  };
+
+  if (!dto.firstName || !dto.lastName || !dto.phone) {
+    return showRegError('reg-client-error', 'Заполните обязательные поля (*)');
+  }
+
+  try {
+    await api.createClient(dto);
+    hide('reg-client-form');
+    showRegSuccess(
+      'Вы успешно зарегистрированы!',
+      `${dto.firstName}, ваши данные сохранены. Наши сотрудники свяжутся с вами по номеру ${dto.phone} для оформления заказа.`
+    );
+  } catch (err) {
+    showRegError('reg-client-error', err.message);
+  }
+});
+
+// ── Register — сотрудник ──────────────────────────────────────
+$('reg-employee-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  hide('reg-employee-error');
+
+  const login    = $('re-login').value.trim();
+  const password = $('re-password').value.trim();
+  const phone    = $('re-phone').value.trim();
+  const roleId   = Number($('re-role').value);
+  const code     = $('re-code').value.trim();
+
+  if (!login || !password || !phone || !roleId) {
+    return showRegError('reg-employee-error', 'Заполните все обязательные поля (*)');
+  }
+  if (password.length < 4) {
+    return showRegError('reg-employee-error', 'Пароль должен содержать минимум 4 символа');
+  }
+  if (code !== STAFF_CODE) {
+    return showRegError('reg-employee-error', 'Неверный код регистрации. Обратитесь к администратору');
+  }
+
+  try {
+    await api.createUser({ roleId, login, password, phoneNumber: phone });
+    hide('reg-employee-form');
+    showRegSuccess(
+      'Аккаунт создан!',
+      `Сотрудник «${login}» успешно зарегистрирован. Теперь вы можете войти в систему.`
+    );
+  } catch (err) {
+    showRegError('reg-employee-error', err.message);
+  }
+});
+
+function showRegError(elId, msg) {
+  const el = $(elId);
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function showRegSuccess(title, text) {
+  $('reg-success-title').textContent = title;
+  $('reg-success-text').textContent  = text;
+  show('reg-success');
+}
+
 $('logout-btn').addEventListener('click', () => {
   currentUser = null;
   hide('app');

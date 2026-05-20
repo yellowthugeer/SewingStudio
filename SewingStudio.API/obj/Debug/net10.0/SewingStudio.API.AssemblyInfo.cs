@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SewingStudio.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+026af597efc17607809e5662016da899413f4a43")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+17088caf15e0e921981c3feb24315fd24dadbc99")]
 [assembly: System.Reflection.AssemblyProductAttribute("SewingStudio.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SewingStudio.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
