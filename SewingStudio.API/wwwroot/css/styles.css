@@ -604,3 +604,29 @@ input, select, textarea { outline: none; font-family: inherit; font-size: 14px; 
 }
 .portal-name { font-size: 16px; font-weight: 600; color: var(--green-dark); margin-bottom: 4px; }
 .portal-hint { font-size: 13px; color: var(--text-muted); }
+
+/* ── Portal review form ──────────────────────────────────────── */
+.portal-review-form {
+  background: var(--green-pale);
+  border: 1px solid #C8E6C9;
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.portal-review-form .detail-section-title {
+  color: var(--green-dark);
+}
+.portal-review-form textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  padding: 8px 10px;
+  border: 1px solid var(--grey-400);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+}
+.portal-review-form textarea:focus {
+  outline: none;
+  border-color: var(--green-light);
+  box-shadow: 0 0 0 3px rgba(76,175,80,.15);
+}

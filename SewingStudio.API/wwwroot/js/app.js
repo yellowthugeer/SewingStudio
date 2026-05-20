@@ -256,7 +256,7 @@ const ROLE_PAGES = {
   'Администратор': ['dashboard', 'clients', 'orders', 'payments', 'reviews', 'users', 'profile'],
   'Швея/Мастер':   ['dashboard', 'orders', 'profile'],
   'Бухгалтер':     ['dashboard', 'orders', 'payments', 'profile'],
-  'Клиент':        ['portal'],
+  'Клиент':        ['portal', 'profile'],
 };
 
 function applyRoleAccess(roleName) {
@@ -974,7 +974,23 @@ async function showOrderDetail(id) {
             </tr>`).join('')}
           </tbody>
         </table>`}
-      </div>`;
+      </div>
+
+      ${currentUser.roleName === 'Клиент' && order.statusName === 'Завершён' && reviews.length === 0 ? `
+      <div class="detail-section portal-review-form">
+        <div class="detail-section-title">✍️ Оставить отзыв</div>
+        <div class="form-group">
+          <label>Рейтинг</label>
+          <select id="portal-rating">
+            ${[5,4,3,2,1].map(n => `<option value="${n}">${stars(n)} (${n})</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Комментарий</label>
+          <textarea id="portal-comment" rows="3" placeholder="Расскажите о вашем впечатлении..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="submitPortalReview(${order.id})">Отправить отзыв</button>
+      </div>` : ''}`;
 
     show('detail-overlay');
   } catch (err) { showError(err.message); }
@@ -983,6 +999,23 @@ async function showOrderDetail(id) {
 $('detail-close-btn').addEventListener('click',  () => hide('detail-overlay'));
 $('detail-close-btn2').addEventListener('click', () => hide('detail-overlay'));
 $('detail-overlay').addEventListener('click', e => { if (e.target === $('detail-overlay')) hide('detail-overlay'); });
+
+async function submitPortalReview(orderId) {
+  const ratingEl  = $('portal-rating');
+  const commentEl = $('portal-comment');
+  if (!ratingEl) return;
+  try {
+    await api.createReview({
+      orderId,
+      rating:  Number(ratingEl.value),
+      comment: commentEl?.value.trim() || null
+    });
+    hide('detail-overlay');
+    toast('Спасибо за ваш отзыв!', 'success');
+  } catch (err) {
+    showError(err.message);
+  }
+}
 
 // ══════════════════════════════════════════════════════════════
 //  PROFILE PAGE
@@ -1079,6 +1112,9 @@ async function loadPortal() {
         <td>${o.description || '—'}</td>
         <td>${fmtMoney(o.price)}</td>
         <td>${statusBadge(o.statusName)}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="showOrderDetail(${o.id})">👁️ Детали</button>
+        </td>
       </tr>`).join('');
   } catch (err) {
     $('portal-orders-tbody').innerHTML = `
