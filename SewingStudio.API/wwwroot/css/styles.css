@@ -316,6 +316,10 @@ input, select, textarea { outline: none; font-family: inherit; font-size: 14px; 
 /* ===== EMPTY ROW ===== */
 .empty-row { text-align: center; color: var(--text-muted); padding: 28px !important; font-style: italic; }
 
+/* ===== ORDER LINK ===== */
+.order-link { color: var(--green-main); font-weight: 600; }
+.order-link:hover { text-decoration: underline; }
+
 /* ===== STARS ===== */
 .stars { color: #F9A825; font-size: 16px; letter-spacing: 2px; }
 

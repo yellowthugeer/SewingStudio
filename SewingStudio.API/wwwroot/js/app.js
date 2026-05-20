@@ -3,7 +3,7 @@
    ============================================================ */
 
 let currentUser = null;
-let cache = { roles: [], statuses: [], clients: [], users: [] };
+let cache = { roles: [], statuses: [], clients: [], users: [], orders: [] };
 
 // ── Helpers ─────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -286,13 +286,15 @@ function resetRoleAccess() {
 
 // ── Cache ────────────────────────────────────────────────────
 async function preloadCache() {
-  const [roles, statuses, clients, users] = await Promise.all([
-    api.getRoles(), api.getStatuses(), api.getClients(), api.getUsers()
+  const [roles, statuses, clients, users, orders] = await Promise.all([
+    api.getRoles(), api.getStatuses(), api.getClients(), api.getUsers(),
+    api.getOrders()
   ]);
   cache.roles    = roles    || [];
   cache.statuses = statuses || [];
   cache.clients  = clients  || [];
   cache.users    = users    || [];
+  cache.orders   = orders   || [];
 }
 
 // ── Page router ──────────────────────────────────────────────
@@ -469,6 +471,7 @@ async function loadOrders() {
     allOrders = currentUser.roleName === 'Швея/Мастер'
       ? await api.getOrdersByUser(currentUser.id)
       : await api.getOrders();
+    cache.orders = allOrders;
 
     const sel = $('order-status-filter');
     sel.innerHTML = '<option value="">Все статусы</option>' +
@@ -639,27 +642,35 @@ async function loadPayments() {
 }
 
 function renderPayments(list) {
-  $('payments-tbody').innerHTML = list.map(p => `
-    <tr>
-      <td>${p.id}</td>
-      <td>#${p.orderId}</td>
-      <td>${fmtMoney(p.amount)}</td>
-      <td>${fmtDate(p.paymentDate)}</td>
-      <td>${p.paymentMethod || '—'}</td>
-      <td>${statusBadge(p.status || 'Ожидает')}</td>
-      <td>
-        <div class="action-btns">
-          <button class="btn btn-sm btn-brown" onclick="editPayment(${p.id})">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deletePayment(${p.id})">🗑️</button>
-        </div>
-      </td>
-    </tr>`).join('');
+  $('payments-tbody').innerHTML = list.length === 0
+    ? `<tr><td colspan="8" class="empty-row">Платежей пока нет</td></tr>`
+    : list.map(p => {
+        const ord = cache.orders.find(o => o.id === p.orderId);
+        const clientName = ord ? ord.clientFullName : '—';
+        return `<tr>
+          <td>${p.id}</td>
+          <td><a href="#" onclick="showOrderDetail(${p.orderId});return false" class="order-link">#${p.orderId}</a></td>
+          <td>${clientName}</td>
+          <td>${fmtMoney(p.amount)}</td>
+          <td>${fmtDate(p.paymentDate)}</td>
+          <td>${p.paymentMethod || '—'}</td>
+          <td>${statusBadge(p.status || 'Ожидает')}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-sm btn-brown" onclick="editPayment(${p.id})">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deletePayment(${p.id})">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
 }
 
 $('add-payment-btn').addEventListener('click', () => openPaymentModal(null));
 
 function openPaymentModal(p) {
-  const orderOpts = allOrders.map(o =>
+  const src = cache.orders.length ? cache.orders : allOrders;
+  if (!src.length) { showError('Сначала создайте хотя бы один заказ'); return; }
+  const orderOpts = src.map(o =>
     `<option value="${o.id}" ${o.id === p?.orderId ? 'selected' : ''}>
       #${o.id} — ${o.clientFullName}
     </option>`).join('');
@@ -702,6 +713,9 @@ function openPaymentModal(p) {
       });
     }
     await loadPayments();
+    // обновляем кеш заказов для дашборда
+    cache.orders = await api.getOrders();
+    toast(p ? 'Платёж обновлён' : 'Платёж добавлен', 'success');
   });
 }
 
@@ -730,25 +744,33 @@ async function loadReviews() {
 }
 
 function renderReviews(list) {
-  $('reviews-tbody').innerHTML = list.map(r => `
-    <tr>
-      <td>${r.id}</td>
-      <td>#${r.orderId}</td>
-      <td><span class="stars">${stars(r.rating)}</span> ${r.rating}/5</td>
-      <td>${r.comment || '—'}</td>
-      <td>
-        <div class="action-btns">
-          <button class="btn btn-sm btn-brown" onclick="editReview(${r.id})">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteReview(${r.id})">🗑️</button>
-        </div>
-      </td>
-    </tr>`).join('');
+  $('reviews-tbody').innerHTML = list.length === 0
+    ? `<tr><td colspan="6" class="empty-row">Отзывов пока нет</td></tr>`
+    : list.map(r => {
+        const ord = cache.orders.find(o => o.id === r.orderId);
+        const clientName = ord ? ord.clientFullName : '—';
+        return `<tr>
+          <td>${r.id}</td>
+          <td><a href="#" onclick="showOrderDetail(${r.orderId});return false" class="order-link">#${r.orderId}</a></td>
+          <td>${clientName}</td>
+          <td><span class="stars">${stars(r.rating)}</span> <strong>${r.rating}/5</strong></td>
+          <td>${r.comment || '—'}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-sm btn-brown" onclick="editReview(${r.id})">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteReview(${r.id})">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
 }
 
 $('add-review-btn').addEventListener('click', () => openReviewModal(null));
 
 function openReviewModal(r) {
-  const orderOpts = allOrders.map(o =>
+  const src = cache.orders.length ? cache.orders : allOrders;
+  if (!src.length) { showError('Сначала создайте хотя бы один заказ'); return; }
+  const orderOpts = src.map(o =>
     `<option value="${o.id}" ${o.id === r?.orderId ? 'selected' : ''}>#${o.id} — ${o.clientFullName}</option>`
   ).join('');
   openModal(r ? 'Редактировать отзыв' : 'Новый отзыв', `
@@ -769,6 +791,7 @@ function openReviewModal(r) {
     if (r) await api.updateReview(r.id, { rating: dto.rating, comment: dto.comment });
     else   await api.createReview(dto);
     await loadReviews();
+    toast(r ? 'Отзыв обновлён' : 'Отзыв добавлен', 'success');
   });
 }
 
@@ -844,6 +867,7 @@ function openUserModal(u) {
       });
     }
     await loadUsers();
+    toast(u ? 'Сотрудник обновлён' : 'Сотрудник добавлен', 'success');
   });
 }
 
