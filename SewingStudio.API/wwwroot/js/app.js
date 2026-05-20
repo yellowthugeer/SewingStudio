@@ -68,8 +68,10 @@ $('login-form').addEventListener('submit', async e => {
     $('current-user-info').innerHTML = `<strong>${user.login}</strong><br>${user.roleName}`;
     hide('login-screen');
     show('app');
+    applyRoleAccess(user.roleName);
     await preloadCache();
-    activatePage('dashboard');
+    const startPage = user.roleName === 'Клиент' ? 'portal' : 'dashboard';
+    activatePage(startPage);
   } catch (err) {
     const el = $('login-error');
     el.textContent = err.message;
@@ -124,7 +126,7 @@ function resetRegisterScreen() {
   // активировать первый таб
   document.querySelectorAll('.reg-tab').forEach((b, i) => b.classList.toggle('active', i === 0));
   // очистить поля
-  ['rc-firstName','rc-lastName','rc-phone','rc-email',
+  ['rc-firstName','rc-lastName','rc-phone','rc-email','rc-login','rc-password',
    're-login','re-password','re-phone','re-code'].forEach(id => { const el = $(id); if (el) el.value = ''; });
   hide('reg-client-error');
   hide('reg-employee-error');
@@ -137,23 +139,26 @@ $('reg-client-form').addEventListener('submit', async e => {
   e.preventDefault();
   hide('reg-client-error');
 
-  const dto = {
-    firstName: $('rc-firstName').value.trim(),
-    lastName:  $('rc-lastName').value.trim(),
-    phone:     $('rc-phone').value.trim(),
-    email:     $('rc-email').value.trim() || null
-  };
+  const firstName = $('rc-firstName').value.trim();
+  const lastName  = $('rc-lastName').value.trim();
+  const phone     = $('rc-phone').value.trim();
+  const email     = $('rc-email').value.trim() || null;
+  const login     = $('rc-login').value.trim();
+  const password  = $('rc-password').value.trim();
 
-  if (!dto.firstName || !dto.lastName || !dto.phone) {
-    return showRegError('reg-client-error', 'Заполните обязательные поля (*)');
+  if (!firstName || !lastName || !phone || !login || !password) {
+    return showRegError('reg-client-error', 'Заполните все обязательные поля (*)');
+  }
+  if (password.length < 4) {
+    return showRegError('reg-client-error', 'Пароль должен содержать минимум 4 символа');
   }
 
   try {
-    await api.createClient(dto);
+    await api.registerClient({ firstName, lastName, phone, email, login, password });
     hide('reg-client-form');
     showRegSuccess(
-      'Вы успешно зарегистрированы!',
-      `${dto.firstName}, ваши данные сохранены. Наши сотрудники свяжутся с вами по номеру ${dto.phone} для оформления заказа.`
+      'Регистрация прошла успешно!',
+      `${firstName}, добро пожаловать! Войдите с логином «${login}» чтобы отслеживать свои заказы.`
     );
   } catch (err) {
     showRegError('reg-client-error', err.message);
@@ -207,11 +212,40 @@ function showRegSuccess(title, text) {
 
 $('logout-btn').addEventListener('click', () => {
   currentUser = null;
+  resetRoleAccess();
   hide('app');
   show('login-screen');
   $('login-input').value = '';
   $('password-input').value = '';
 });
+
+// ── Role-based access control ─────────────────────────────────
+const ROLE_PAGES = {
+  'Администратор': ['dashboard', 'clients', 'orders', 'payments', 'reviews', 'users'],
+  'Швея/Мастер':   ['dashboard', 'orders'],
+  'Бухгалтер':     ['dashboard', 'orders', 'payments'],
+  'Клиент':        ['portal'],
+};
+
+function applyRoleAccess(roleName) {
+  const allowed = ROLE_PAGES[roleName] || ['dashboard'];
+  document.querySelectorAll('.nav-item[data-page]').forEach(a => {
+    const page = a.dataset.page;
+    // Клиентский портал — отдельная логика
+    if (a.classList.contains('nav-client-only')) {
+      a.classList.toggle('hidden', roleName !== 'Клиент');
+      return;
+    }
+    a.classList.toggle('hidden', !allowed.includes(page));
+  });
+}
+
+function resetRoleAccess() {
+  document.querySelectorAll('.nav-item[data-page]').forEach(a => {
+    if (!a.classList.contains('nav-client-only')) a.classList.remove('hidden');
+    else a.classList.add('hidden');
+  });
+}
 
 // ── Cache ────────────────────────────────────────────────────
 async function preloadCache() {
@@ -233,6 +267,7 @@ async function loadPage(page) {
     case 'payments':  return loadPayments();
     case 'reviews':   return loadReviews();
     case 'users':     return loadUsers();
+    case 'portal':    return loadPortal();
   }
 }
 
@@ -718,3 +753,45 @@ $('modal-save-btn').addEventListener('click', async () => {
     showError(err.message);
   }
 });
+
+// ══════════════════════════════════════════════════════════════
+//  CLIENT PORTAL — только для роли «Клиент»
+// ══════════════════════════════════════════════════════════════
+async function loadPortal() {
+  if (!currentUser) return;
+
+  // Приветствие
+  const name = currentUser.login;
+  $('portal-welcome').innerHTML = `
+    <div class="portal-greeting">
+      <span class="portal-avatar">👤</span>
+      <div>
+        <div class="portal-name">Добро пожаловать, <strong>${name}</strong>!</div>
+        <div class="portal-hint">Здесь вы можете отслеживать статус ваших заказов в ателье «Стиль».</div>
+      </div>
+    </div>`;
+
+  try {
+    const orders = await api.getMyOrders(currentUser.id);
+    if (orders.length === 0) {
+      $('portal-orders-tbody').innerHTML = `
+        <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">
+          У вас пока нет заказов. Обратитесь к администратору ателье.
+        </td></tr>`;
+      return;
+    }
+    $('portal-orders-tbody').innerHTML = orders.map(o => `
+      <tr>
+        <td>#${o.id}</td>
+        <td>${fmtDate(o.data)}</td>
+        <td>${o.description || '—'}</td>
+        <td>${fmtMoney(o.price)}</td>
+        <td>${statusBadge(o.statusName)}</td>
+      </tr>`).join('');
+  } catch (err) {
+    $('portal-orders-tbody').innerHTML = `
+      <tr><td colspan="5" style="text-align:center;color:var(--danger);padding:16px">
+        ${err.message}
+      </td></tr>`;
+  }
+}

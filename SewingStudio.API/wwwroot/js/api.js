@@ -16,6 +16,7 @@ async function request(method, path, body = null) {
 const api = {
   // Auth
   login: (dto)              => request('POST', '/users/login', dto),
+  registerClient: (dto)     => request('POST', '/auth/register-client', dto),
 
   // Roles
   getRoles: ()              => request('GET',  '/roles'),
@@ -39,6 +40,7 @@ const api = {
 
   // Orders
   getOrders: ()             => request('GET',  '/orders'),
+  getMyOrders: (userId)     => request('GET',  `/orders/my/${userId}`),
   getOrder:  (id)           => request('GET',  `/orders/${id}`),
   getOrdersByStatus:(sid)   => request('GET',  `/orders/status/${sid}`),
   createOrder:(dto)         => request('POST', '/orders', dto),

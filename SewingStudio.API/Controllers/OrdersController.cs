@@ -117,6 +117,36 @@ public class OrdersController : ControllerBase
         return Ok(orders);
     }
 
+    // GET api/orders/my/5 — заказы клиента по его userId (для клиентского портала)
+    [HttpGet("my/{userId}")]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetMyOrders(int userId)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null) return NotFound();
+        if (user.ClientId == null) return BadRequest(new { message = "Пользователь не привязан к клиенту" });
+
+        var orders = await _db.Orders
+            .Include(o => o.Client)
+            .Include(o => o.User)
+            .Include(o => o.Status)
+            .Where(o => o.IdClient == user.ClientId)
+            .Select(o => new OrderDto
+            {
+                Id             = o.Id,
+                Data           = o.Data,
+                IdClient       = o.IdClient,
+                ClientFullName = o.Client.FirstName + " " + o.Client.LastName,
+                IdUser         = o.IdUser,
+                UserLogin      = o.User.Login,
+                Price          = o.Price,
+                Description    = o.Description,
+                StatusId       = o.StatusId,
+                StatusName     = o.Status.StatusName
+            })
+            .ToListAsync();
+        return Ok(orders);
+    }
+
     // POST api/orders
     [HttpPost]
     public async Task<ActionResult<OrderDto>> Create(CreateOrderDto dto)

@@ -7,6 +7,7 @@ public class UserDto
     public string RoleName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public string Login { get; set; } = string.Empty;
+    public int? ClientId { get; set; }
 }
 
 public class CreateUserDto

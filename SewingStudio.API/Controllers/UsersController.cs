@@ -26,7 +26,8 @@ public class UsersController : ControllerBase
                 RoleId = u.RoleId,
                 RoleName = u.Role.RoleName,
                 PhoneNumber = u.PhoneNumber,
-                Login = u.Login
+                Login = u.Login,
+                ClientId = u.ClientId
             })
             .ToListAsync();
         return Ok(users);
@@ -44,7 +45,8 @@ public class UsersController : ControllerBase
             RoleId = u.RoleId,
             RoleName = u.Role.RoleName,
             PhoneNumber = u.PhoneNumber,
-            Login = u.Login
+            Login = u.Login,
+            ClientId = u.ClientId
         });
     }
 
@@ -64,7 +66,8 @@ public class UsersController : ControllerBase
             RoleId = user.RoleId,
             RoleName = user.Role.RoleName,
             PhoneNumber = user.PhoneNumber,
-            Login = user.Login
+            Login = user.Login,
+            ClientId = user.ClientId
         });
     }
 

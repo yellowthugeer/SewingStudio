@@ -380,3 +380,46 @@ input, select, textarea { outline: none; font-family: inherit; font-size: 14px; 
   .stats-grid { grid-template-columns: 1fr; }
   .main-content { padding: 16px; }
 }
+
+/* ===== REGISTRATION DIVIDER ===== */
+.reg-divider {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brown-mid);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  margin: 8px 0 16px;
+  position: relative;
+}
+.reg-divider::before, .reg-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: var(--grey-200);
+}
+.reg-divider::before { left: 0; }
+.reg-divider::after  { right: 0; }
+
+/* ===== CLIENT PORTAL ===== */
+.portal-welcome {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.portal-greeting {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.portal-avatar {
+  font-size: 40px;
+  background: var(--green-pale);
+  border-radius: 50%;
+  width: 64px; height: 64px;
+  display: flex; align-items: center; justify-content: center;
+}
+.portal-name { font-size: 16px; font-weight: 600; color: var(--green-dark); margin-bottom: 4px; }
+.portal-hint { font-size: 13px; color: var(--text-muted); }

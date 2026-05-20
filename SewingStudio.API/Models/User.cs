@@ -24,8 +24,13 @@ public class User
     [MaxLength(30)]
     public string Password { get; set; } = string.Empty;
 
+    public int? ClientId { get; set; }
+
     [ForeignKey(nameof(RoleId))]
     public Role Role { get; set; } = null!;
+
+    [ForeignKey(nameof(ClientId))]
+    public Client? Client { get; set; }
 
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }
