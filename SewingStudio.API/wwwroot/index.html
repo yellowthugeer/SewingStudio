@@ -174,17 +174,25 @@
             <div class="stat-label">Выручка (руб.)</div>
           </div>
         </div>
+        <!-- Разбивка по статусам -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">Заказы по статусам</div>
+          <div id="status-breakdown"></div>
+        </div>
+
         <div class="dashboard-row">
-          <div class="card">
+          <div class="card" style="flex:2">
             <div class="card-header">Последние заказы</div>
-            <table class="table" id="dashboard-orders-table">
+            <table class="table">
               <thead>
-                <tr>
-                  <th>#</th><th>Клиент</th><th>Описание</th><th>Цена</th><th>Статус</th>
-                </tr>
+                <tr><th>#</th><th>Клиент</th><th>Описание</th><th>Цена</th><th>Статус</th></tr>
               </thead>
               <tbody id="dashboard-orders-body"></tbody>
             </table>
+          </div>
+          <div class="card" style="flex:1;min-width:220px">
+            <div class="card-header">Последние платежи</div>
+            <div id="dashboard-payments-list"></div>
           </div>
         </div>
       </div>
@@ -219,7 +227,10 @@
             <select id="order-status-filter">
               <option value="">Все статусы</option>
             </select>
+            <input type="date" id="order-date-from" title="Дата с" />
+            <input type="date" id="order-date-to"   title="Дата по" />
             <input type="text" id="order-search" class="filter-search" placeholder="Поиск по клиенту или описанию..." />
+            <button class="btn btn-outline btn-sm" id="order-reset-filters">✕ Сбросить</button>
           </div>
           <table class="table">
             <thead>
@@ -349,6 +360,22 @@
 
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
+
+  <!-- CONFIRM DIALOG -->
+  <div id="confirm-overlay" class="modal-overlay hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-header">
+        <h3 id="confirm-title">Подтверждение</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-msg" style="font-size:15px;color:var(--text-main);line-height:1.5"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="confirm-cancel-btn">Отмена</button>
+        <button class="btn btn-danger"  id="confirm-ok-btn">Удалить</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ORDER DETAIL MODAL -->
   <div id="detail-overlay" class="modal-overlay hidden">

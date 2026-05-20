@@ -160,7 +160,7 @@ C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\SewingStudio.API.
 C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\SewingStudio.API.genruntimeconfig.cache
 C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\ref\SewingStudio.API.dll
 C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\SewingStudio.API.sourcelink.json
-C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\compressed\hagj45p4o8-{0}-27sa9eq9h0-27sa9eq9h0.gz
-C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\compressed\r82g3kd7t7-{0}-4fte215whp-4fte215whp.gz
 C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\compressed\8iler1gk6g-{0}-ccci2gwpqh-ccci2gwpqh.gz
-C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\compressed\7h6qeopthz-{0}-elm82zv0iv-elm82zv0iv.gz
+C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\compressed\hagj45p4o8-{0}-r1feydfpji-r1feydfpji.gz
+C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\compressed\r82g3kd7t7-{0}-i90m8dnol9-i90m8dnol9.gz
+C:\Users\twink\SewingStudio\SewingStudio.API\obj\Debug\net10.0\compressed\7h6qeopthz-{0}-l25lspgyfz-l25lspgyfz.gz

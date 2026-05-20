@@ -482,6 +482,82 @@ input, select, textarea { outline: none; font-family: inherit; font-size: 14px; 
 }
 .detail-item span { font-size: 14px; color: var(--text-main); font-weight: 500; }
 
+/* ===== CONFIRM MODAL ===== */
+.confirm-modal { width: 380px; }
+.confirm-modal .modal-header { border-bottom: 2px solid var(--danger-light); }
+.confirm-modal .modal-header h3 { color: var(--danger); }
+
+/* ===== STATUS BREAKDOWN ===== */
+.status-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.status-bar-item { display: flex; flex-direction: column; gap: 6px; }
+.status-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.status-bar-count { color: var(--green-main); }
+.status-bar-track {
+  height: 8px;
+  background: var(--grey-200);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.status-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .4s ease;
+}
+.fill-new    { background: #1565C0; }
+.fill-active { background: var(--green-main); }
+.fill-ready  { background: #F57F17; }
+.fill-done   { background: var(--green-dark); }
+.fill-cancel { background: var(--danger); }
+
+/* ===== QUICK STATUS SELECT ===== */
+.status-select {
+  padding: 4px 8px;
+  border: 2px solid var(--grey-200);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color var(--transition);
+  max-width: 150px;
+}
+.status-select:focus { border-color: var(--green-light); outline: none; }
+
+/* ===== DATE FILTER INPUTS ===== */
+.filter-row input[type="date"] {
+  padding: 8px 10px;
+  border: 2px solid var(--grey-200);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-main);
+  background: var(--white);
+  transition: border-color var(--transition);
+}
+.filter-row input[type="date"]:focus { border-color: var(--green-light); outline: none; }
+
+/* ===== PAYMENT MINI LIST ===== */
+.payment-mini-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--grey-200);
+  font-size: 13px;
+}
+.payment-mini-item:last-child { border-bottom: none; }
+.payment-mini-order { color: var(--text-muted); font-size: 12px; }
+.payment-mini-amount { font-weight: 700; color: var(--green-main); }
+
 /* ===== REGISTRATION DIVIDER ===== */
 .reg-divider {
   text-align: center;

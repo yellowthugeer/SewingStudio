@@ -46,6 +46,29 @@ function toast(msg, type = 'error') {
 }
 function showError(msg) { toast(msg, 'error'); }
 
+// ── Custom confirm dialog ─────────────────────────────────────
+function confirmDialog(message, okLabel = 'Удалить', danger = true) {
+  return new Promise(resolve => {
+    $('confirm-msg').textContent = message;
+    $('confirm-ok-btn').textContent = okLabel;
+    $('confirm-ok-btn').className = `btn ${danger ? 'btn-danger' : 'btn-primary'}`;
+    show('confirm-overlay');
+
+    const cleanup = () => {
+      $('confirm-ok-btn').removeEventListener('click', onOk);
+      $('confirm-cancel-btn').removeEventListener('click', onCancel);
+      $('confirm-overlay').removeEventListener('click', onBg);
+    };
+    const onOk     = () => { hide('confirm-overlay'); cleanup(); resolve(true);  };
+    const onCancel = () => { hide('confirm-overlay'); cleanup(); resolve(false); };
+    const onBg     = e  => { if (e.target === $('confirm-overlay')) onCancel(); };
+
+    $('confirm-ok-btn').addEventListener('click', onOk);
+    $('confirm-cancel-btn').addEventListener('click', onCancel);
+    $('confirm-overlay').addEventListener('click', onBg);
+  });
+}
+
 // ── Navigation ───────────────────────────────────────────────
 function activatePage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -291,25 +314,70 @@ async function loadPage(page) {
 // ══════════════════════════════════════════════════════════════
 async function loadDashboard() {
   try {
-    const [orders, clients] = await Promise.all([api.getOrders(), api.getClients()]);
+    const [orders, clients, payments] = await Promise.all([
+      api.getOrders(), api.getClients(), api.getPayments()
+    ]);
+
+    // Топ-статистика
     $('stat-orders').textContent  = orders.length;
     $('stat-clients').textContent = clients.length;
     const active = orders.filter(o => o.statusName === 'В работе' || o.statusName === 'Новый');
     $('stat-active').textContent  = active.length;
-    const revenue = orders
-      .filter(o => o.statusName === 'Завершён')
-      .reduce((s, o) => s + Number(o.price), 0);
+    const revenue = payments
+      .filter(p => p.status === 'Оплачено')
+      .reduce((s, p) => s + Number(p.amount), 0);
     $('stat-revenue').textContent = revenue.toLocaleString('ru-RU');
 
+    // Разбивка по статусам
+    const fillClass = { 'Новый':'fill-new','В работе':'fill-active','Готов к выдаче':'fill-ready','Завершён':'fill-done','Отменён':'fill-cancel' };
+    const statusCounts = {};
+    cache.statuses.forEach(s => { statusCounts[s.statusName] = 0; });
+    orders.forEach(o => { if (statusCounts[o.statusName] !== undefined) statusCounts[o.statusName]++; });
+    const maxCount = Math.max(1, ...Object.values(statusCounts));
+
+    $('status-breakdown').innerHTML = `<div class="status-breakdown-grid">
+      ${cache.statuses.map(s => {
+        const count = statusCounts[s.statusName] || 0;
+        const pct   = Math.round((count / maxCount) * 100);
+        const cls   = fillClass[s.statusName] || 'fill-active';
+        return `<div class="status-bar-item">
+          <div class="status-bar-label">
+            <span>${s.statusName}</span>
+            <span class="status-bar-count">${count}</span>
+          </div>
+          <div class="status-bar-track">
+            <div class="status-bar-fill ${cls}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    // Последние заказы
     const recent = [...orders].reverse().slice(0, 8);
-    $('dashboard-orders-body').innerHTML = recent.map(o => `
-      <tr>
-        <td>#${o.id}</td>
-        <td>${o.clientFullName}</td>
-        <td>${o.description || '—'}</td>
-        <td>${fmtMoney(o.price)}</td>
-        <td>${statusBadge(o.statusName)}</td>
-      </tr>`).join('');
+    $('dashboard-orders-body').innerHTML = recent.length === 0
+      ? `<tr><td colspan="5" class="empty-row">Заказов пока нет</td></tr>`
+      : recent.map(o => `
+        <tr>
+          <td>#${o.id}</td>
+          <td>${o.clientFullName}</td>
+          <td>${o.description || '—'}</td>
+          <td>${fmtMoney(o.price)}</td>
+          <td>${statusBadge(o.statusName)}</td>
+        </tr>`).join('');
+
+    // Последние платежи
+    const recentPay = [...payments].reverse().slice(0, 6);
+    $('dashboard-payments-list').innerHTML = recentPay.length === 0
+      ? `<p style="color:var(--text-muted);font-size:13px;padding:8px 0">Платежей нет</p>`
+      : recentPay.map(p => `
+        <div class="payment-mini-item">
+          <div>
+            <div class="payment-mini-order">Заказ #${p.orderId}</div>
+            <div>${fmtDate(p.paymentDate)}</div>
+          </div>
+          <div class="payment-mini-amount">${fmtMoney(p.amount)}</div>
+        </div>`).join('');
+
   } catch (err) { showError(err.message); }
 }
 
@@ -385,8 +453,8 @@ async function editClient(id) {
 }
 
 async function deleteClient(id) {
-  if (!confirm('Удалить клиента?')) return;
-  try { await api.deleteClient(id); await loadClients(); }
+  if (!await confirmDialog('Удалить этого клиента? Действие необратимо.')) return;
+  try { await api.deleteClient(id); await loadClients(); toast('Клиент удалён', 'info'); }
   catch (err) { showError(err.message); }
 }
 
@@ -427,7 +495,13 @@ function renderOrders(list) {
       <td>${o.userLogin}</td>
       <td>${o.description || '—'}</td>
       <td>${fmtMoney(o.price)}</td>
-      <td>${statusBadge(o.statusName)}</td>
+      <td>
+        ${isAdmin
+          ? `<select class="status-select" onchange="quickStatusChange(${o.id}, this.value, this)">
+               ${cache.statuses.map(s => `<option value="${s.id}" ${s.id === o.statusId ? 'selected' : ''}>${s.statusName}</option>`).join('')}
+             </select>`
+          : statusBadge(o.statusName)}
+      </td>
       <td>
         <div class="action-btns">
           <button class="btn btn-sm btn-outline" onclick="showOrderDetail(${o.id})" title="Детали">👁️</button>
@@ -440,17 +514,47 @@ function renderOrders(list) {
 
 $('order-status-filter').addEventListener('change', applyOrderFilters);
 $('order-search').addEventListener('input', applyOrderFilters);
+$('order-date-from').addEventListener('change', applyOrderFilters);
+$('order-date-to').addEventListener('change', applyOrderFilters);
+$('order-reset-filters').addEventListener('click', () => {
+  $('order-status-filter').value = '';
+  $('order-search').value  = '';
+  $('order-date-from').value = '';
+  $('order-date-to').value   = '';
+  renderOrders(allOrders);
+});
 
 function applyOrderFilters() {
   const statusId = $('order-status-filter').value;
-  const q = $('order-search').value.toLowerCase();
+  const q        = $('order-search').value.toLowerCase();
+  const dateFrom = $('order-date-from').value ? new Date($('order-date-from').value) : null;
+  const dateTo   = $('order-date-to').value   ? new Date($('order-date-to').value + 'T23:59:59') : null;
+
   let list = allOrders;
   if (statusId) list = list.filter(o => String(o.statusId) === statusId);
+  if (dateFrom) list = list.filter(o => new Date(o.data) >= dateFrom);
+  if (dateTo)   list = list.filter(o => new Date(o.data) <= dateTo);
   if (q) list = list.filter(o =>
     o.clientFullName.toLowerCase().includes(q) ||
     (o.description || '').toLowerCase().includes(q)
   );
   renderOrders(list);
+}
+
+async function quickStatusChange(orderId, newStatusId, selectEl) {
+  try {
+    await api.updateOrderStatus(orderId, Number(newStatusId));
+    const statusName = cache.statuses.find(s => s.id === Number(newStatusId))?.statusName || '';
+    // Обновляем локальный массив без перезагрузки
+    const order = allOrders.find(o => o.id === orderId);
+    if (order) { order.statusId = Number(newStatusId); order.statusName = statusName; }
+    toast(`Статус заказа #${orderId} изменён на «${statusName}»`, 'success');
+  } catch (err) {
+    showError(err.message);
+    // Откатываем select
+    const order = allOrders.find(o => o.id === orderId);
+    if (order && selectEl) selectEl.value = String(order.statusId);
+  }
 }
 
 $('add-order-btn').addEventListener('click', () => openOrderModal(null));
@@ -510,8 +614,8 @@ async function editOrder(id) {
 }
 
 async function deleteOrder(id) {
-  if (!confirm('Удалить заказ?')) return;
-  try { await api.deleteOrder(id); await loadOrders(); }
+  if (!await confirmDialog('Удалить заказ #' + id + '? Все связанные платежи и отзывы будут удалены.')) return;
+  try { await api.deleteOrder(id); await loadOrders(); toast('Заказ удалён', 'info'); }
   catch (err) { showError(err.message); }
 }
 
@@ -608,8 +712,8 @@ async function editPayment(id) {
 }
 
 async function deletePayment(id) {
-  if (!confirm('Удалить платёж?')) return;
-  try { await api.deletePayment(id); await loadPayments(); }
+  if (!await confirmDialog('Удалить этот платёж?')) return;
+  try { await api.deletePayment(id); await loadPayments(); toast('Платёж удалён', 'info'); }
   catch (err) { showError(err.message); }
 }
 
@@ -674,8 +778,8 @@ function editReview(id) {
 }
 
 async function deleteReview(id) {
-  if (!confirm('Удалить отзыв?')) return;
-  try { await api.deleteReview(id); await loadReviews(); }
+  if (!await confirmDialog('Удалить этот отзыв?')) return;
+  try { await api.deleteReview(id); await loadReviews(); toast('Отзыв удалён', 'info'); }
   catch (err) { showError(err.message); }
 }
 
@@ -753,8 +857,8 @@ async function deleteUser(id) {
     alert('Нельзя удалить текущего пользователя');
     return;
   }
-  if (!confirm('Удалить сотрудника?')) return;
-  try { await api.deleteUser(id); await loadUsers(); }
+  if (!await confirmDialog('Удалить сотрудника? Это действие необратимо.')) return;
+  try { await api.deleteUser(id); await loadUsers(); toast('Сотрудник удалён', 'info'); }
   catch (err) { showError(err.message); }
 }
 
