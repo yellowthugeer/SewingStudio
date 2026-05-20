@@ -141,6 +141,9 @@
         <a href="#" class="nav-item nav-client-only hidden" data-page="portal">
           <span class="nav-icon">📦</span> Мои заказы
         </a>
+        <a href="#" class="nav-item nav-staff-only" data-page="profile">
+          <span class="nav-icon">👤</span> Мой профиль
+        </a>
       </nav>
       <div class="sidebar-footer">
         <div class="current-user" id="current-user-info"></div>
@@ -216,6 +219,7 @@
             <select id="order-status-filter">
               <option value="">Все статусы</option>
             </select>
+            <input type="text" id="order-search" class="filter-search" placeholder="Поиск по клиенту или описанию..." />
           </div>
           <table class="table">
             <thead>
@@ -274,6 +278,42 @@
         </div>
       </div>
 
+      <!-- PROFILE PAGE -->
+      <div id="page-profile" class="page hidden">
+        <div class="page-header"><h2>Мой профиль</h2></div>
+        <div class="card profile-card">
+          <div class="profile-header" id="profile-header"></div>
+          <form id="profile-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Логин <span class="req">*</span></label>
+                <input id="p-login" />
+              </div>
+              <div class="form-group">
+                <label>Телефон <span class="req">*</span></label>
+                <input id="p-phone" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Роль</label>
+              <input id="p-role" readonly style="background:var(--grey-100);cursor:not-allowed" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Новый пароль</label>
+                <input type="password" id="p-pass" placeholder="Оставьте пустым, чтобы не менять" />
+              </div>
+              <div class="form-group">
+                <label>Подтвердите пароль</label>
+                <input type="password" id="p-pass2" placeholder="Повторите пароль" />
+              </div>
+            </div>
+            <div id="profile-error" class="error-msg hidden"></div>
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+          </form>
+        </div>
+      </div>
+
       <!-- USERS PAGE -->
       <div id="page-users" class="page hidden">
         <div class="page-header">
@@ -303,6 +343,23 @@
       <div class="modal-footer">
         <button class="btn btn-outline" id="modal-cancel-btn">Отмена</button>
         <button class="btn btn-primary" id="modal-save-btn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- ORDER DETAIL MODAL -->
+  <div id="detail-overlay" class="modal-overlay hidden">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3 id="detail-title">Детали заказа</h3>
+        <button class="modal-close" id="detail-close-btn">✕</button>
+      </div>
+      <div class="modal-body" id="detail-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="detail-close-btn2">Закрыть</button>
       </div>
     </div>
   </div>

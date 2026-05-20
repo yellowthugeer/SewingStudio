@@ -34,8 +34,17 @@ function statusBadge(name) {
   return `<span class="badge ${cls}">${name}</span>`;
 }
 
-// ── Alert / confirm helpers ──────────────────────────────────
-function showError(msg) { alert('Ошибка: ' + msg); }
+// ── Toast notifications ───────────────────────────────────────
+function toast(msg, type = 'error') {
+  const icons = { error: '❌', success: '✅', info: 'ℹ️' };
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<span class="toast-icon">${icons[type] || '❌'}</span><span>${msg}</span>`;
+  $('toast-container').appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 3500);
+}
+function showError(msg) { toast(msg, 'error'); }
 
 // ── Navigation ───────────────────────────────────────────────
 function activatePage(page) {
@@ -221,19 +230,23 @@ $('logout-btn').addEventListener('click', () => {
 
 // ── Role-based access control ─────────────────────────────────
 const ROLE_PAGES = {
-  'Администратор': ['dashboard', 'clients', 'orders', 'payments', 'reviews', 'users'],
-  'Швея/Мастер':   ['dashboard', 'orders'],
-  'Бухгалтер':     ['dashboard', 'orders', 'payments'],
+  'Администратор': ['dashboard', 'clients', 'orders', 'payments', 'reviews', 'users', 'profile'],
+  'Швея/Мастер':   ['dashboard', 'orders', 'profile'],
+  'Бухгалтер':     ['dashboard', 'orders', 'payments', 'profile'],
   'Клиент':        ['portal'],
 };
 
 function applyRoleAccess(roleName) {
   const allowed = ROLE_PAGES[roleName] || ['dashboard'];
+  const isClient = roleName === 'Клиент';
   document.querySelectorAll('.nav-item[data-page]').forEach(a => {
     const page = a.dataset.page;
-    // Клиентский портал — отдельная логика
     if (a.classList.contains('nav-client-only')) {
-      a.classList.toggle('hidden', roleName !== 'Клиент');
+      a.classList.toggle('hidden', !isClient);
+      return;
+    }
+    if (a.classList.contains('nav-staff-only')) {
+      a.classList.toggle('hidden', isClient);
       return;
     }
     a.classList.toggle('hidden', !allowed.includes(page));
@@ -242,8 +255,9 @@ function applyRoleAccess(roleName) {
 
 function resetRoleAccess() {
   document.querySelectorAll('.nav-item[data-page]').forEach(a => {
-    if (!a.classList.contains('nav-client-only')) a.classList.remove('hidden');
-    else a.classList.add('hidden');
+    if (a.classList.contains('nav-client-only')) a.classList.add('hidden');
+    else if (a.classList.contains('nav-staff-only')) a.classList.remove('hidden');
+    else a.classList.remove('hidden');
   });
 }
 
@@ -268,6 +282,7 @@ async function loadPage(page) {
     case 'reviews':   return loadReviews();
     case 'users':     return loadUsers();
     case 'portal':    return loadPortal();
+    case 'profile':   return loadProfile();
   }
 }
 
@@ -360,6 +375,7 @@ function openClientModal(c) {
     if (c) await api.updateClient(c.id, dto);
     else   await api.createClient(dto);
     await loadClients();
+    toast(c ? 'Клиент обновлён' : 'Клиент добавлен', 'success');
   });
 }
 
@@ -381,17 +397,29 @@ let allOrders = [];
 
 async function loadOrders() {
   try {
-    allOrders = await api.getOrders();
-    // populate status filter
+    // Швея/Мастер видит только свои заказы
+    allOrders = currentUser.roleName === 'Швея/Мастер'
+      ? await api.getOrdersByUser(currentUser.id)
+      : await api.getOrders();
+
     const sel = $('order-status-filter');
     sel.innerHTML = '<option value="">Все статусы</option>' +
       cache.statuses.map(s => `<option value="${s.id}">${s.statusName}</option>`).join('');
+
+    // Кнопка "Новый заказ" — только для Администратора
+    const addBtn = $('add-order-btn');
+    addBtn.classList.toggle('hidden', currentUser.roleName === 'Швея/Мастер');
+
     renderOrders(allOrders);
   } catch (err) { showError(err.message); }
 }
 
 function renderOrders(list) {
-  $('orders-tbody').innerHTML = list.map(o => `
+  const isAdmin = currentUser.roleName === 'Администратор';
+  const isSeamstress = currentUser.roleName === 'Швея/Мастер';
+  $('orders-tbody').innerHTML = list.length === 0
+    ? `<tr><td colspan="8" class="empty-row">Заказы не найдены</td></tr>`
+    : list.map(o => `
     <tr>
       <td>#${o.id}</td>
       <td>${fmtDate(o.data)}</td>
@@ -402,20 +430,28 @@ function renderOrders(list) {
       <td>${statusBadge(o.statusName)}</td>
       <td>
         <div class="action-btns">
-          <button class="btn btn-sm btn-brown" onclick="editOrder(${o.id})">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">🗑️</button>
+          <button class="btn btn-sm btn-outline" onclick="showOrderDetail(${o.id})" title="Детали">👁️</button>
+          ${!isSeamstress ? `<button class="btn btn-sm btn-brown" onclick="editOrder(${o.id})" title="Редактировать">✏️</button>` : ''}
+          ${isAdmin      ? `<button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})" title="Удалить">🗑️</button>` : ''}
         </div>
       </td>
     </tr>`).join('');
 }
 
-$('order-status-filter').addEventListener('change', async function () {
-  if (!this.value) { renderOrders(allOrders); return; }
-  try {
-    const filtered = await api.getOrdersByStatus(this.value);
-    renderOrders(filtered);
-  } catch (err) { showError(err.message); }
-});
+$('order-status-filter').addEventListener('change', applyOrderFilters);
+$('order-search').addEventListener('input', applyOrderFilters);
+
+function applyOrderFilters() {
+  const statusId = $('order-status-filter').value;
+  const q = $('order-search').value.toLowerCase();
+  let list = allOrders;
+  if (statusId) list = list.filter(o => String(o.statusId) === statusId);
+  if (q) list = list.filter(o =>
+    o.clientFullName.toLowerCase().includes(q) ||
+    (o.description || '').toLowerCase().includes(q)
+  );
+  renderOrders(list);
+}
 
 $('add-order-btn').addEventListener('click', () => openOrderModal(null));
 
@@ -464,6 +500,7 @@ function openOrderModal(o) {
     else   await api.createOrder(dto);
     await loadOrders();
     await loadDashboardStats();
+    toast(o ? 'Заказ обновлён' : 'Заказ создан', 'success');
   });
 }
 
@@ -751,6 +788,133 @@ $('modal-save-btn').addEventListener('click', async () => {
     closeModal();
   } catch (err) {
     showError(err.message);
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  ORDER DETAIL
+// ══════════════════════════════════════════════════════════════
+async function showOrderDetail(id) {
+  try {
+    const [order, payments, allRevs] = await Promise.all([
+      api.getOrder(id),
+      api.getPaymentsByOrder(id),
+      api.getReviews()
+    ]);
+    const reviews = allRevs.filter(r => r.orderId === id);
+
+    $('detail-title').textContent = `Заказ #${order.id}`;
+    $('detail-body').innerHTML = `
+      <div class="detail-section">
+        <div class="detail-section-title">Информация о заказе</div>
+        <div class="detail-grid">
+          <div class="detail-item"><label>Клиент</label><span>${order.clientFullName}</span></div>
+          <div class="detail-item"><label>Сотрудник</label><span>${order.userLogin}</span></div>
+          <div class="detail-item"><label>Дата</label><span>${fmtDate(order.data)}</span></div>
+          <div class="detail-item"><label>Стоимость</label><span>${fmtMoney(order.price)}</span></div>
+          <div class="detail-item"><label>Статус</label><span>${statusBadge(order.statusName)}</span></div>
+          <div class="detail-item"><label>Описание</label><span>${order.description || '—'}</span></div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Платежи (${payments.length})</div>
+        ${payments.length === 0 ? '<p style="color:var(--text-muted);font-size:13px">Платежей нет</p>' : `
+        <table class="table">
+          <thead><tr><th>#</th><th>Сумма</th><th>Дата</th><th>Метод</th><th>Статус</th></tr></thead>
+          <tbody>${payments.map(p => `
+            <tr>
+              <td>${p.id}</td>
+              <td>${fmtMoney(p.amount)}</td>
+              <td>${fmtDate(p.paymentDate)}</td>
+              <td>${p.paymentMethod || '—'}</td>
+              <td>${statusBadge(p.status || 'Ожидает')}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`}
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Отзывы (${reviews.length})</div>
+        ${reviews.length === 0 ? '<p style="color:var(--text-muted);font-size:13px">Отзывов нет</p>' : `
+        <table class="table">
+          <thead><tr><th>Рейтинг</th><th>Комментарий</th></tr></thead>
+          <tbody>${reviews.map(r => `
+            <tr>
+              <td><span class="stars">${stars(r.rating)}</span> ${r.rating}/5</td>
+              <td>${r.comment || '—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`}
+      </div>`;
+
+    show('detail-overlay');
+  } catch (err) { showError(err.message); }
+}
+
+$('detail-close-btn').addEventListener('click',  () => hide('detail-overlay'));
+$('detail-close-btn2').addEventListener('click', () => hide('detail-overlay'));
+$('detail-overlay').addEventListener('click', e => { if (e.target === $('detail-overlay')) hide('detail-overlay'); });
+
+// ══════════════════════════════════════════════════════════════
+//  PROFILE PAGE
+// ══════════════════════════════════════════════════════════════
+function loadProfile() {
+  if (!currentUser) return;
+  $('p-login').value = currentUser.login;
+  $('p-phone').value = currentUser.phoneNumber;
+  $('p-role').value  = currentUser.roleName;
+  $('p-pass').value  = '';
+  $('p-pass2').value = '';
+  hide('profile-error');
+  $('profile-header').innerHTML = `
+    <div class="profile-avatar-lg">👤</div>
+    <div>
+      <div class="profile-name">${currentUser.login}</div>
+      <div class="profile-role">${currentUser.roleName}</div>
+    </div>`;
+}
+
+$('profile-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  hide('profile-error');
+
+  const login = $('p-login').value.trim();
+  const phone = $('p-phone').value.trim();
+  const pass  = $('p-pass').value.trim();
+  const pass2 = $('p-pass2').value.trim();
+
+  if (!login || !phone) {
+    $('profile-error').textContent = 'Логин и телефон обязательны';
+    show('profile-error');
+    return;
+  }
+  if (pass && pass !== pass2) {
+    $('profile-error').textContent = 'Пароли не совпадают';
+    show('profile-error');
+    return;
+  }
+  if (pass && pass.length < 4) {
+    $('profile-error').textContent = 'Пароль минимум 4 символа';
+    show('profile-error');
+    return;
+  }
+
+  try {
+    await api.updateUser(currentUser.id, {
+      roleId:      currentUser.roleId,
+      login,
+      phoneNumber: phone,
+      password:    pass || undefined
+    });
+    currentUser.login       = login;
+    currentUser.phoneNumber = phone;
+    $('current-user-info').innerHTML = `<strong>${login}</strong><br>${currentUser.roleName}`;
+    loadProfile();
+    toast('Профиль успешно сохранён', 'success');
+  } catch (err) {
+    $('profile-error').textContent = err.message;
+    show('profile-error');
   }
 });
 

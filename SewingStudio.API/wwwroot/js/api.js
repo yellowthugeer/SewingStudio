@@ -43,6 +43,7 @@ const api = {
   getMyOrders: (userId)     => request('GET',  `/orders/my/${userId}`),
   getOrder:  (id)           => request('GET',  `/orders/${id}`),
   getOrdersByStatus:(sid)   => request('GET',  `/orders/status/${sid}`),
+  getOrdersByUser:  (uid)   => request('GET',  `/orders/user/${uid}`),
   createOrder:(dto)         => request('POST', '/orders', dto),
   updateOrder:(id, dto)     => request('PUT',  `/orders/${id}`, dto),
   updateOrderStatus:(id,sid)=> request('PATCH',`/orders/${id}/status`, sid),
