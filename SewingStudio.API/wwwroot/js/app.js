@@ -71,16 +71,10 @@ function confirmDialog(message, okLabel = 'Удалить', danger = true) {
 
 // ── Navigation ───────────────────────────────────────────────
 function activatePage(page) {
-  document.querySelectorAll('.page').forEach(p => {
-    p.classList.remove('active');
-    p.classList.add('hidden');
-  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(a => a.classList.remove('active'));
   const el = $(`page-${page}`);
-  if (el) {
-    el.classList.remove('hidden');
-    el.classList.add('active');
-  }
+  if (el) el.classList.add('active');
   const nav = document.querySelector(`[data-page="${page}"]`);
   if (nav) nav.classList.add('active');
   loadPage(page);
