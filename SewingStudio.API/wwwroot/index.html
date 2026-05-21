@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SewingStudio — CRM Ателье «Стиль»</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">✂️</div>
+      <h1>Ателье «Стиль»</h1>
+      <p class="login-subtitle">CRM система</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label>Логин</label>
+          <input type="text" id="login-input" placeholder="Введите логин" required />
+        </div>
+        <div class="form-group">
+          <label>Пароль</label>
+          <input type="password" id="password-input" placeholder="Введите пароль" required />
+        </div>
+        <div id="login-error" class="error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full">Войти</button>
+      </form>
+      <p class="auth-switch">Нет аккаунта? <a href="#" id="go-to-register">Зарегистрироваться</a></p>
+    </div>
+  </div>
+
+  <!-- REGISTRATION SCREEN -->
+  <div id="register-screen" class="login-screen hidden">
+    <div class="login-card reg-card">
+      <div class="login-logo">✂️</div>
+      <h1>Регистрация</h1>
+      <p class="login-subtitle">Ателье «Стиль»</p>
+
+      <div class="reg-tabs">
+        <button class="reg-tab active" data-tab="client">👥 Клиент</button>
+        <button class="reg-tab" data-tab="employee">🔧 Сотрудник</button>
+      </div>
+
+      <!-- CLIENT FORM -->
+      <form id="reg-client-form" class="reg-form">
+        <div class="form-group">
+          <label>Имя <span class="req">*</span></label>
+          <input type="text" id="rc-firstName" placeholder="Введите имя" required />
+        </div>
+        <div class="form-group">
+          <label>Фамилия <span class="req">*</span></label>
+          <input type="text" id="rc-lastName" placeholder="Введите фамилию" required />
+        </div>
+        <div class="form-group">
+          <label>Телефон <span class="req">*</span></label>
+          <input type="tel" id="rc-phone" placeholder="+7 (999) 000-00-00" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="rc-email" placeholder="example@mail.ru" />
+        </div>
+        <div class="reg-divider">Данные для входа</div>
+        <div class="form-group">
+          <label>Логин <span class="req">*</span></label>
+          <input type="text" id="rc-login" placeholder="Придумайте логин" required />
+        </div>
+        <div class="form-group">
+          <label>Пароль <span class="req">*</span></label>
+          <input type="password" id="rc-password" placeholder="Минимум 4 символа" required />
+        </div>
+        <div id="reg-client-error" class="error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full">Зарегистрироваться</button>
+      </form>
+
+      <!-- EMPLOYEE FORM -->
+      <form id="reg-employee-form" class="reg-form hidden">
+        <div class="form-group">
+          <label>Логин <span class="req">*</span></label>
+          <input type="text" id="re-login" placeholder="Придумайте логин" required />
+        </div>
+        <div class="form-group">
+          <label>Пароль <span class="req">*</span></label>
+          <input type="password" id="re-password" placeholder="Придумайте пароль" required />
+        </div>
+        <div class="form-group">
+          <label>Телефон <span class="req">*</span></label>
+          <input type="tel" id="re-phone" placeholder="+7 (999) 000-00-00" required />
+        </div>
+        <div class="form-group">
+          <label>Должность <span class="req">*</span></label>
+          <select id="re-role"></select>
+        </div>
+        <div class="form-group">
+          <label>Код регистрации <span class="req">*</span></label>
+          <input type="password" id="re-code" placeholder="Введите секретный код" required />
+          <small class="hint">Код выдаётся администратором</small>
+        </div>
+        <div id="reg-employee-error" class="error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full">Зарегистрироваться</button>
+      </form>
+
+      <!-- SUCCESS MESSAGE -->
+      <div id="reg-success" class="reg-success hidden">
+        <div class="success-icon">✅</div>
+        <h3 id="reg-success-title">Регистрация прошла успешно!</h3>
+        <p id="reg-success-text"></p>
+      </div>
+
+      <p class="auth-switch"><a href="#" id="go-to-login">← Уже есть аккаунт? Войти</a></p>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-icon">✂️</span>
+        <div>
+          <div class="sidebar-title">Ателье «Стиль»</div>
+          <div class="sidebar-sub">CRM система</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span> Панель управления
+        </a>
+        <a href="#" class="nav-item" data-page="clients">
+          <span class="nav-icon">👥</span> Клиенты
+        </a>
+        <a href="#" class="nav-item" data-page="orders">
+          <span class="nav-icon">📋</span> Заказы
+        </a>
+        <a href="#" class="nav-item" data-page="payments">
+          <span class="nav-icon">💰</span> Платежи
+        </a>
+        <a href="#" class="nav-item" data-page="reviews">
+          <span class="nav-icon">⭐</span> Отзывы
+        </a>
+        <a href="#" class="nav-item" data-page="users">
+          <span class="nav-icon">🔧</span> Сотрудники
+        </a>
+        <!-- Клиентский портал — виден только роли «Клиент» -->
+        <a href="#" class="nav-item nav-client-only hidden" data-page="portal">
+          <span class="nav-icon">📦</span> Мои заказы
+        </a>
+        <a href="#" class="nav-item" data-page="profile">
+          <span class="nav-icon">👤</span> Мой профиль
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="current-user" id="current-user-info"></div>
+        <button class="btn btn-outline btn-sm" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="page-dashboard" class="page active">
+        <div class="page-header">
+          <h2>Панель управления</h2>
+        </div>
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card green">
+            <div class="stat-value" id="stat-orders">—</div>
+            <div class="stat-label">Всего заказов</div>
+          </div>
+          <div class="stat-card brown">
+            <div class="stat-value" id="stat-clients">—</div>
+            <div class="stat-label">Клиентов</div>
+          </div>
+          <div class="stat-card dark-green">
+            <div class="stat-value" id="stat-active">—</div>
+            <div class="stat-label">Активные заказы</div>
+          </div>
+          <div class="stat-card dark-brown">
+            <div class="stat-value" id="stat-revenue">—</div>
+            <div class="stat-label">Выручка (руб.)</div>
+          </div>
+        </div>
+        <!-- Разбивка по статусам -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">Заказы по статусам</div>
+          <div id="status-breakdown"></div>
+        </div>
+
+        <div class="dashboard-row">
+          <div class="card" style="flex:2">
+            <div class="card-header">Последние заказы</div>
+            <table class="table">
+              <thead>
+                <tr><th>#</th><th>Клиент</th><th>Описание</th><th>Цена</th><th>Статус</th></tr>
+              </thead>
+              <tbody id="dashboard-orders-body"></tbody>
+            </table>
+          </div>
+          <div class="card" style="flex:1;min-width:220px">
+            <div class="card-header">Последние платежи</div>
+            <div id="dashboard-payments-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENTS PAGE -->
+      <div id="page-clients" class="page hidden">
+        <div class="page-header">
+          <h2>Клиенты</h2>
+          <button class="btn btn-primary" id="add-client-btn">+ Добавить клиента</button>
+        </div>
+        <div class="card">
+          <div class="search-bar">
+            <input type="text" id="client-search" placeholder="Поиск по имени или телефону..." />
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>ID</th><th>Имя</th><th>Фамилия</th><th>Телефон</th><th>Email</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="clients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ORDERS PAGE -->
+      <div id="page-orders" class="page hidden">
+        <div class="page-header">
+          <h2>Заказы</h2>
+          <button class="btn btn-primary" id="add-order-btn">+ Новый заказ</button>
+        </div>
+        <div class="card">
+          <div class="filter-row">
+            <select id="order-status-filter">
+              <option value="">Все статусы</option>
+            </select>
+            <input type="date" id="order-date-from" title="Дата с" />
+            <input type="date" id="order-date-to"   title="Дата по" />
+            <input type="text" id="order-search" class="filter-search" placeholder="Поиск по клиенту или описанию..." />
+            <button class="btn btn-outline btn-sm" id="order-reset-filters">✕ Сбросить</button>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>ID</th><th>Дата</th><th>Клиент</th><th>Сотрудник</th><th>Описание</th><th>Цена</th><th>Статус</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAYMENTS PAGE -->
+      <div id="page-payments" class="page hidden">
+        <div class="page-header">
+          <h2>Платежи</h2>
+          <button class="btn btn-primary" id="add-payment-btn">+ Добавить платёж</button>
+        </div>
+        <div class="card">
+          <table class="table">
+            <thead>
+              <tr><th>ID</th><th>Заказ</th><th>Клиент</th><th>Сумма</th><th>Дата</th><th>Метод</th><th>Статус</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="payments-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REVIEWS PAGE -->
+      <div id="page-reviews" class="page hidden">
+        <div class="page-header">
+          <h2>Отзывы</h2>
+          <button class="btn btn-primary" id="add-review-btn">+ Добавить отзыв</button>
+        </div>
+        <div class="card">
+          <table class="table">
+            <thead>
+              <tr><th>ID</th><th>Заказ</th><th>Клиент</th><th>Рейтинг</th><th>Комментарий</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="reviews-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CLIENT PORTAL PAGE -->
+      <div id="page-portal" class="page hidden">
+        <div class="page-header">
+          <h2>Мои заказы</h2>
+        </div>
+        <div class="portal-welcome card" id="portal-welcome"></div>
+        <div class="card">
+          <table class="table">
+            <thead>
+              <tr><th>#</th><th>Дата</th><th>Описание</th><th>Стоимость</th><th>Статус</th><th></th></tr>
+            </thead>
+            <tbody id="portal-orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PROFILE PAGE -->
+      <div id="page-profile" class="page hidden">
+        <div class="page-header"><h2>Мой профиль</h2></div>
+        <div class="card profile-card">
+          <div class="profile-header" id="profile-header"></div>
+          <form id="profile-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Логин <span class="req">*</span></label>
+                <input id="p-login" />
+              </div>
+              <div class="form-group">
+                <label>Телефон <span class="req">*</span></label>
+                <input id="p-phone" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Роль</label>
+              <input id="p-role" readonly style="background:var(--grey-100);cursor:not-allowed" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Новый пароль</label>
+                <input type="password" id="p-pass" placeholder="Оставьте пустым, чтобы не менять" />
+              </div>
+              <div class="form-group">
+                <label>Подтвердите пароль</label>
+                <input type="password" id="p-pass2" placeholder="Повторите пароль" />
+              </div>
+            </div>
+            <div id="profile-error" class="error-msg hidden"></div>
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- USERS PAGE -->
+      <div id="page-users" class="page hidden">
+        <div class="page-header">
+          <h2>Сотрудники</h2>
+          <button class="btn btn-primary" id="add-user-btn">+ Добавить сотрудника</button>
+        </div>
+        <div class="card">
+          <table class="table">
+            <thead>
+              <tr><th>ID</th><th>Логин</th><th>Роль</th><th>Телефон</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Форма</h3>
+        <button class="modal-close" id="modal-close-btn">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="modal-cancel-btn">Отмена</button>
+        <button class="btn btn-primary" id="modal-save-btn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- CONFIRM DIALOG -->
+  <div id="confirm-overlay" class="modal-overlay hidden">
+    <div class="modal confirm-modal">
+      <div class="modal-header">
+        <h3 id="confirm-title">Подтверждение</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-msg" style="font-size:15px;color:var(--text-main);line-height:1.5"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="confirm-cancel-btn">Отмена</button>
+        <button class="btn btn-danger"  id="confirm-ok-btn">Удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER DETAIL MODAL -->
+  <div id="detail-overlay" class="modal-overlay hidden">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3 id="detail-title">Детали заказа</h3>
+        <button class="modal-close" id="detail-close-btn">✕</button>
+      </div>
+      <div class="modal-body" id="detail-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="detail-close-btn2">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
